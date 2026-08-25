@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recibo da Semana — Mercado Certo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Archivo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F6F4EE;
+    --ink: #2B2B27;
+    --ink-soft: #6B6A62;
+    --stamp-red: #C0392B;
+    --shelf-green: #3E6B4F;
+    --line: #D8D4C6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #DCD8CC;
+    background-image: radial-gradient(circle at 50% 0%, #e8e4d8 0%, #c9c5b8 100%);
+    font-family: 'Archivo', sans-serif;
+    color: var(--ink);
+    display: flex;
+    justify-content: center;
+    padding: 48px 16px 80px;
+  }
+  .receipt {
+    width: 420px;
+    max-width: 100%;
+    background: var(--paper);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.1);
+    position: relative;
+    padding: 20px 28px 32px;
+  }
+  .masthead { text-align: center; padding: 20px 0 16px; border-bottom: 2px dashed var(--line); }
+  .masthead .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--ink-soft); text-transform: uppercase; }
+  .masthead h1 { font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 26px; letter-spacing: -0.5px; margin: 6px 0 4px; }
+  .masthead .date { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft); }
+  .stamp-wrap { display: flex; justify-content: center; margin: 24px 0; }
+  .stamp {
+    border: 3px solid var(--stamp-red); color: var(--stamp-red); border-radius: 8px; padding: 10px 18px;
+    transform: rotate(-4deg); text-align: center; font-family: 'Archivo', sans-serif; font-weight: 800;
+    text-transform: uppercase; opacity: 0.92;
+  }
+  .stamp .amount { font-size: 30px; line-height: 1; }
+  .stamp .caption { font-size: 11px; letter-spacing: 1.5px; margin-top: 2px; }
+  .tabs { display: flex; gap: 8px; margin: 20px 0 4px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  .tab { flex: 1; text-align: center; padding: 8px 4px; border: 1px solid var(--line); cursor: pointer; background: transparent; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.5px; }
+  .tab.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .section-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--ink-soft); margin: 18px 0 8px; display: flex; justify-content: space-between; }
+  .combo-view { display: none; }
+  .combo-view.active { display: block; }
+  .line { display: flex; align-items: baseline; font-family: 'IBM Plex Mono', monospace; font-size: 13px; padding: 5px 0; gap: 6px; }
+  .line .name { white-space: nowrap; }
+  .line .dots { flex: 1; border-bottom: 1px dotted var(--ink-soft); transform: translateY(-3px); opacity: 0.6; }
+  .line .store-tag { font-size: 10px; text-transform: uppercase; background: var(--shelf-green); color: var(--paper); padding: 2px 6px; border-radius: 3px; letter-spacing: 0.5px; }
+  .line .price { font-weight: 600; min-width: 56px; text-align: right; }
+  .total-row { display: flex; justify-content: space-between; align-items: baseline; border-top: 2px solid var(--ink); margin-top: 14px; padding-top: 10px; font-family: 'IBM Plex Mono', monospace; }
+  .total-row .label { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+  .total-row .value { font-size: 22px; font-weight: 700; }
+  .missing-note { margin-top: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); line-height: 1.5; }
+  .spread-card { margin-top: 24px; border: 1px dashed var(--stamp-red); background: rgba(192, 57, 43, 0.06); padding: 12px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  .spread-card .title { font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--stamp-red); font-size: 11px; margin-bottom: 6px; }
+  .spread-card .row { display: flex; justify-content: space-between; margin-top: 2px; }
+  .spread-card .cheap { color: var(--shelf-green); font-weight: 600; }
+  .spread-card .pricey { color: var(--stamp-red); font-weight: 600; }
+  .barcode { margin: 28px 0 6px; height: 40px; background: repeating-linear-gradient(90deg, var(--ink) 0px, var(--ink) 2px, transparent 2px, transparent 5px, var(--ink) 5px, var(--ink) 6px, transparent 6px, transparent 10px); }
+  .footer-note { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-soft); letter-spacing: 1px; text-transform: uppercase; }
+  @media (prefers-reduced-motion: no-preference) { .receipt { animation: drop 0.5s ease-out; } }
+  @keyframes drop { from { transform: translateY(-16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  button:focus-visible, .tab:focus-visible { outline: 2px solid var(--shelf-green); outline-offset: 2px; }
+</style>
+</head>
+<body>
+  <div class="receipt">
+    <div class="masthead">
+      <div class="eyebrow">Comparador de Mercado — Toronto</div>
+      <h1>Recibo da Semana</h1>
+      <div class="date">25 de agosto de 2026</div>
+    </div>
+
+    <div class="stamp-wrap">
+      <div class="stamp">
+        <div class="amount">$23.74</div>
+        <div class="caption">Economizados (11%)</div>
+      </div>
+    </div>
+
+    <div class="section-label"><span>vs. comprar tudo em walmart</span><span>$207.95</span></div>
+
+    <div class="tabs">
+      <button class="tab active" data-target="view-3" onclick="showCombo('view-3', this)">3 lojas</button>
+      <button class="tab" data-target="view-2" onclick="showCombo('view-2', this)">2 lojas</button>
+    </div>
+
+    <div id="view-3" class="combo-view active">
+      <div class="section-label"><span>freshco + walmart + foodbasics</span><span>48/48 itens</span></div>
+      
+      <div class="line">
+        <span class="name">Leite 2% 4L</span>
+        <span class="dots"></span>
+        <span class="store-tag">freshco</span>
+        <span class="price">$3.99</span>
+      </div>
+      <div class="line">
+        <span class="name">Iogurte grego (pote grande)</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$2.28</span>
+      </div>
+      <div class="line">
+        <span class="name">Manteiga 454g</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$7.68</span>
+      </div>
+      <div class="line">
+        <span class="name">Queijo cheddar (bloco)</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$2.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Ovos grandes (dúzia)</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$3.93</span>
+      </div>
+      <div class="line">
+        <span class="name">Cream cheese</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$2.98</span>
+      </div>
+      <div class="line">
+        <span class="name">Pão integral 675g</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$2.48</span>
+      </div>
+      <div class="line">
+        <span class="name">Pão branco</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$8.43</span>
+      </div>
+      <div class="line">
+        <span class="name">Bagels (pacote)</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.85</span>
+      </div>
+      <div class="line">
+        <span class="name">Tortillas</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$2.44</span>
+      </div>
+      <div class="line">
+        <span class="name">Banana</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$0.35</span>
+      </div>
+      <div class="line">
+        <span class="name">Maçã</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.00</span>
+      </div>
+      <div class="line">
+        <span class="name">Tomate roma</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$0.60</span>
+      </div>
+      <div class="line">
+        <span class="name">Cebola</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.88</span>
+      </div>
+      <div class="line">
+        <span class="name">Batata</span>
+        <span class="dots"></span>
+        <span class="store-tag">foodbasics</span>
+        <span class="price">$4.99</span>
+      </div>
+      <div class="line">
+        <span class="name">Cenoura</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$3.67</span>
+      </div>
+      <div class="line">
+        <span class="name">Alface</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.94</span>
+      </div>
+      <div class="line">
+        <span class="name">Pepino</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.94</span>
+      </div>
+      <div class="line">
+        <span class="name">Abacate</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.44</span>
+      </div>
+      <div class="line">
+        <span class="name">Pimentão</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.28</span>
+      </div>
+      <div class="line">
+        <span class="name">Alho</span>
+        <span class="dots"></span>
+        <span class="store-tag">foodbasics</span>
+        <span class="price">$0.99</span>
+      </div>
+      <div class="line">
+        <span class="name">Peito de frango</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$5.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Carne moída</span>
+        <span class="dots"></span>
+        <span class="store-tag">freshco</span>
+        <span class="price">$5.44</span>
+      </div>
+      <div class="line">
+        <span class="name">Costeleta de porco</span>
+        <span class="dots"></span>
+        <span class="store-tag">foodbasics</span>
+        <span class="price">$2.96</span>
+      </div>
+      <div class="line">
+        <span class="name">Bacon</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$3.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Filé de salmão</span>
+        <span class="dots"></span>
+        <span class="store-tag">foodbasics</span>
+        <span class="price">$3.49</span>
+      </div>
+      <div class="line">
+        <span class="name">Camarão</span>
+        <span class="dots"></span>
+        <span class="store-tag">foodbasics</span>
+        <span class="price">$5.49</span>
+      </div>
+      <div class="line">
+        <span class="name">Arroz basmati 8kg</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$5.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Espaguete 900g</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$3.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Penne</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.36</span>
+      </div>
+      <div class="line">
+        <span class="name">Farinha de trigo 2.5kg</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$3.77</span>
+      </div>
+      <div class="line">
+        <span class="name">Azeite de oliva</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$11.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Tomate em lata (pelado/pure)</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$0.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Feijão preto em lata</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.67</span>
+      </div>
+      <div class="line">
+        <span class="name">Pasta de amendoim</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$2.47</span>
+      </div>
+      <div class="line">
+        <span class="name">Cereal matinal</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$3.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Aveia</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$3.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Pizza congelada</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$2.78</span>
+      </div>
+      <div class="line">
+        <span class="name">Legumes congelados (mix)</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.17</span>
+      </div>
+      <div class="line">
+        <span class="name">Sorvete</span>
+        <span class="dots"></span>
+        <span class="store-tag">foodbasics</span>
+        <span class="price">$4.99</span>
+      </div>
+      <div class="line">
+        <span class="name">Café moído</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$7.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Suco de laranja</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$5.47</span>
+      </div>
+      <div class="line">
+        <span class="name">Refrigerante 2L</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.43</span>
+      </div>
+      <div class="line">
+        <span class="name">Água engarrafada (fardo)</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Papel higiênico</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$11.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Papel toalha</span>
+        <span class="dots"></span>
+        <span class="store-tag">foodbasics</span>
+        <span class="price">$5.98</span>
+      </div>
+      <div class="line">
+        <span class="name">Detergente de louça</span>
+        <span class="dots"></span>
+        <span class="store-tag">freshco</span>
+        <span class="price">$8.99</span>
+      </div>
+      <div class="line">
+        <span class="name">Sabão de roupa</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$4.97</span>
+      </div>
+      <div class="total-row"><span class="label">Total</span><span class="value">$184.21</span></div>
+      <div class="missing-note">Sem oferta essa semana: Leite integral 4L, Coxa/sobrecoxa de frango, Açúcar 2kg</div>
+    </div>
+
+    <div id="view-2" class="combo-view">
+      <div class="section-label"><span>walmart + foodbasics</span><span>47/48 itens</span></div>
+      
+      <div class="line">
+        <span class="name">Leite 2% 4L</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$5.98</span>
+      </div>
+      <div class="line">
+        <span class="name">Iogurte grego (pote grande)</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$2.28</span>
+      </div>
+      <div class="line">
+        <span class="name">Manteiga 454g</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$7.68</span>
+      </div>
+      <div class="line">
+        <span class="name">Queijo cheddar (bloco)</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$2.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Ovos grandes (dúzia)</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$3.93</span>
+      </div>
+      <div class="line">
+        <span class="name">Cream cheese</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$2.98</span>
+      </div>
+      <div class="line">
+        <span class="name">Pão integral 675g</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$2.48</span>
+      </div>
+      <div class="line">
+        <span class="name">Pão branco</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$8.43</span>
+      </div>
+      <div class="line">
+        <span class="name">Bagels (pacote)</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.85</span>
+      </div>
+      <div class="line">
+        <span class="name">Tortillas</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$2.44</span>
+      </div>
+      <div class="line">
+        <span class="name">Banana</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$0.35</span>
+      </div>
+      <div class="line">
+        <span class="name">Maçã</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.00</span>
+      </div>
+      <div class="line">
+        <span class="name">Tomate roma</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$0.60</span>
+      </div>
+      <div class="line">
+        <span class="name">Cebola</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.88</span>
+      </div>
+      <div class="line">
+        <span class="name">Batata</span>
+        <span class="dots"></span>
+        <span class="store-tag">foodbasics</span>
+        <span class="price">$4.99</span>
+      </div>
+      <div class="line">
+        <span class="name">Cenoura</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$3.67</span>
+      </div>
+      <div class="line">
+        <span class="name">Alface</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.94</span>
+      </div>
+      <div class="line">
+        <span class="name">Pepino</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.94</span>
+      </div>
+      <div class="line">
+        <span class="name">Abacate</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.44</span>
+      </div>
+      <div class="line">
+        <span class="name">Pimentão</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.28</span>
+      </div>
+      <div class="line">
+        <span class="name">Alho</span>
+        <span class="dots"></span>
+        <span class="store-tag">foodbasics</span>
+        <span class="price">$0.99</span>
+      </div>
+      <div class="line">
+        <span class="name">Peito de frango</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$5.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Carne moída</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$5.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Costeleta de porco</span>
+        <span class="dots"></span>
+        <span class="store-tag">foodbasics</span>
+        <span class="price">$2.96</span>
+      </div>
+      <div class="line">
+        <span class="name">Bacon</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$3.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Filé de salmão</span>
+        <span class="dots"></span>
+        <span class="store-tag">foodbasics</span>
+        <span class="price">$3.49</span>
+      </div>
+      <div class="line">
+        <span class="name">Camarão</span>
+        <span class="dots"></span>
+        <span class="store-tag">foodbasics</span>
+        <span class="price">$5.49</span>
+      </div>
+      <div class="line">
+        <span class="name">Arroz basmati 8kg</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$5.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Espaguete 900g</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$3.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Penne</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.36</span>
+      </div>
+      <div class="line">
+        <span class="name">Farinha de trigo 2.5kg</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$3.77</span>
+      </div>
+      <div class="line">
+        <span class="name">Azeite de oliva</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$11.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Tomate em lata (pelado/pure)</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$0.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Feijão preto em lata</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.67</span>
+      </div>
+      <div class="line">
+        <span class="name">Pasta de amendoim</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$2.47</span>
+      </div>
+      <div class="line">
+        <span class="name">Cereal matinal</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$3.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Aveia</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$3.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Pizza congelada</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$2.78</span>
+      </div>
+      <div class="line">
+        <span class="name">Legumes congelados (mix)</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.17</span>
+      </div>
+      <div class="line">
+        <span class="name">Sorvete</span>
+        <span class="dots"></span>
+        <span class="store-tag">foodbasics</span>
+        <span class="price">$4.99</span>
+      </div>
+      <div class="line">
+        <span class="name">Café moído</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$7.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Suco de laranja</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$5.47</span>
+      </div>
+      <div class="line">
+        <span class="name">Refrigerante 2L</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.43</span>
+      </div>
+      <div class="line">
+        <span class="name">Água engarrafada (fardo)</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$1.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Papel higiênico</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$11.97</span>
+      </div>
+      <div class="line">
+        <span class="name">Papel toalha</span>
+        <span class="dots"></span>
+        <span class="store-tag">foodbasics</span>
+        <span class="price">$5.98</span>
+      </div>
+      <div class="line">
+        <span class="name">Sabão de roupa</span>
+        <span class="dots"></span>
+        <span class="store-tag">walmart</span>
+        <span class="price">$4.97</span>
+      </div>
+      <div class="total-row"><span class="label">Total</span><span class="value">$177.74</span></div>
+      <div class="missing-note">Sem oferta essa semana: Leite integral 4L, Coxa/sobrecoxa de frango, Açúcar 2kg, Detergente de louça</div>
+    </div>
+
+    <div class="spread-card">
+      <div class="title">Maior diferença de preço</div>
+      <div>Filé de salmão</div>
+      <div class="row"><span class="cheap">foodbasics: $3.49</span><span class="pricey">sobeys: $35.00</span></div>
+    </div>
+
+    <div class="barcode"></div>
+    <div class="footer-note">Atualiza toda quarta-feira</div>
+  </div>
+
+  <script>
+    function showCombo(id, btn) {
+      document.querySelectorAll('.combo-view').forEach(function(el) { el.classList.remove('active'); });
+      document.querySelectorAll('.tab').forEach(function(el) { el.classList.remove('active'); });
+      document.getElementById(id).classList.add('active');
+      btn.classList.add('active');
+    }
+  </script>
+</body>
+</html>
